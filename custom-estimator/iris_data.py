@@ -4,6 +4,7 @@ import numpy as np
 
 CSV_COLUMN_NAMES = ['SepalLength', 'SepalWidth', 'PetalLength', 'PetalWidth', 'Species']
 LABEL_NAME = 'Species'
+SPECIES = ['Setosa', 'Versicolor', 'Virginica']
 
 
 def read_from_file(filename):

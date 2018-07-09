@@ -41,4 +41,43 @@ def my_model_fn(features, labels, mode, params):
 
 
 def main():
-    pass
+    train_data, train_label, test_data, test_label = iris_data.load_data()
+    my_feature_columns = []
+    for key in train_data.keys():
+        my_feature_columns.append(tf.feature_column.numeric_column(key))
+
+    classifier = tf.estimator.Estimator(
+        model_fn=my_model_fn,
+        params={
+            'feature_columns': my_feature_columns,
+            'hidden_units': [10, 10],
+            'n_classes': 3
+        }
+    )
+
+    classifier.train(input_fn=lambda: iris_data.train_input_fn(train_data, train_label, 32), steps=100)
+    eval_result = classifier.evaluate(input_fn=lambda: iris_data.eval_input_fn(test_data, test_label, 32))
+    print('\nTest set accuracy: {accuracy:0.3f}\n'.format(**eval_result))
+
+    expected = ['Setosa', 'Versicolor', 'Virginica']
+    predict_x = {
+        'SepalLength': [5.1, 5.9, 6.9],
+        'SepalWidth': [3.3, 3.0, 3.1],
+        'PetalLength': [1.7, 4.2, 5.4],
+        'PetalWidth': [0.5, 1.5, 2.1],
+    }
+
+    predictions = classifier.predict(
+        input_fn=lambda: iris_data.eval_input_fn(predict_x, labels=None, batch_size=32))
+
+    for pred_dict, expec in zip(predictions, expected):
+        template = ('\nPrediction is "{}" ({:.1f}%), expected "{}"')
+
+        class_id = pred_dict['class_ids'][0]
+        probability = pred_dict['probabilities'][class_id]
+
+        print(template.format(iris_data.SPECIES[class_id],
+                              100 * probability, expec))
+
+if __name__ == '__main__':
+    main()
